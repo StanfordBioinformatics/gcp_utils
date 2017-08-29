@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
 
-#
-# mk_new_project_buckets.sh - Create Google Cloud buckets for a new lab/project.
-#
+# set_compute_cloud_logging.sh - Set the Compute Engine Cloud logging for a project.
+# 
 # ARGUMENTS:
-# all: Users of lab/project.
+# None
 #
 # SWITCHES:
 #  -l LAB-NAME   : Create buckets for lab LAB-NAME.
 #  -p PROJ-NAME  : Create buckets for project PROJ-NAME.
-#  -c CLASS-NAME : Create buckets for class CLASS-NAME
+#  -c CLASS-NAME : Create buckets for class CLASS-NAME.
 #  -d            : Enter debug mode.
-#  -v            : Become verbose.
+#  -v            : Become verbose. 
 #
-# Created by Keith Bettinger on 1/21/15.
+# Created by Keith Bettinger on 8/17/17.
 #
-# Copyright(c) 2015 The Board of Trustees of The Leland Stanford
+# Copyright(c) 2017 The Board of Trustees of The Leland Stanford
 # Junior University.  All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,7 +46,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
 # Get location of this script.
 script_dir=`dirname $0`
 
@@ -69,16 +67,7 @@ script_dir=`dirname $0`
 process_arguments $@
 shift $?
 
-# Create the group bucket for the project.
-create_group_bucket $project_id "$project_id-$BUCKET_SUFFIX_GROUP"
-# Create the public bucket for the project.
-create_public_bucket $project_id "$project_id-$BUCKET_SUFFIX_PUBLIC"
-# Create the logs bucket for the project.
-create_logs_bucket $project_id "$project_id-$BUCKET_SUFFIX_LOGS"
-
-# For each of the users given as arguments:
-for i in "$@"
-do
-	# Create the user bucket.
-	create_user_bucket $project_id $i
-done
+#
+# Set the Compute Engine cloud logging.
+#
+set_compute_cloud_logging $project_id

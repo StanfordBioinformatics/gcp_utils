@@ -44,6 +44,7 @@ GBSC_LOGS_BUCKET='gbsc-gcp-lab-gbsc-logs'
 PROJECT_PREFIX='gbsc-gcp'
 PROJECT_PREFIX_LAB='lab'
 PROJECT_PREFIX_PROJ='project'
+PROJECT_PREFIX_CLASS='class'
 
 BUCKET_SUFFIX_GROUP='group'
 BUCKET_SUFFIX_PUBLIC='public'
@@ -55,20 +56,27 @@ COMPUTE_LOGGING_PREFIX='Compute/UsageLogs'
 
 LAB_GROUP_PREFIX='scgpm_lab'
 PROJ_GROUP_PREFIX='scgpm_prj'
+CLASS_GROUP_PREFIX='scgpm_cls'
 
 DEBUG=''
 
-# Output: sets:
+# Sets:                                                                                                     
 #   project_id
-#   pi_tag (if given)
+#   google_group_name
+#                                                                                                           
+#   pi_tag (if given) 
 #   project_name (if given)
+#   class_name (if given)
 #
 process_arguments() {
 
         OPTIND=1
         verbose=0
-        while getopts "i:l:p:dv" opt; do
+        while getopts "c:i:l:p:dv" opt; do
            case "$opt" in
+	        c)
+		   class_name=$OPTARG
+		   ;;
                 i)
                     project_id=$OPTARG
                     ;;
@@ -95,13 +103,19 @@ process_arguments() {
         elif [ $pi_tag ]
         then
                 project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_LAB-$pi_tag"
-                
+                google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
+
         elif [ $project_name ]
         then
                 project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_PROJ-$project_name"
+                google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
 
+	elif [ $class_name ]
+	then
+	        project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name"
+                google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
         else
-                echo "Need either -l LAB-NAME or -p PROJ-NAME...exiting."
+                echo "Need one of -l LAB-NAME, -p PROJ-NAME, or -c CLASS-NAME...exiting."
                 exit -1
         fi
         
@@ -125,7 +139,7 @@ create_group_bucket() {
     #   - As a DURABLE REDUCED AVAILABILITY bucket.
     #   - In the US.
     $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$group_bucket
-        echo 
+    echo 
         
     # Set logging of access to bucket to GBSC Billing bucket.
     echo "===> Setting logging of $group_bucket to $GBSC_LOGS_BUCKET"
@@ -354,5 +368,20 @@ set_storage_logging() {
 
     echo "Setting Storage logging to $GBSC_LOGS_BUCKET for bucket $bucket in $project_id."
     $DEBUG gsutil logging set on -b gs://$GBSC_LOGS_BUCKET -o $STORAGE_LOGGING_PREFIX/$project_id/$bucket/$bucket gs://$bucket
+
+}
+
+#
+# set_compute_logging: Sets up compute engine usage logging on given project.
+#
+# Arguments:
+#  1st: Project ID  
+#
+set_compute_cloud_logging() {
+
+    local project_id=$1
+
+    echo "Setting Compute Engine Cloud logging startup-script-url for $project_id."
+    $DEBUG gcloud compute project-info add-metadata --project $project_id --metadata startup-script-url=https://dl.google.com/cloudagents/install-logging-agent.sh
 
 }
