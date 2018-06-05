@@ -9,6 +9,7 @@
 #  -i PROJECT-ID : Use this Google Project ID in bucket name.
 #  -l LAB-NAME   : Create buckets for lab LAB-NAME.
 #  -p PROJ-NAME  : Create buckets for project PROJ-NAME.
+#  -c CLASS-NAME : Create buckets for class CLASS-NAME.
 #  -d            : Enter debug mode.
 #  -v            : Become verbose.
 #
@@ -58,8 +59,11 @@ script_dir=`dirname $0`
 
 # Sets:
 #   project_id
+#   google_group_name
+#
 #   pi_tag (if given)
 #   project_name (if given)
+#   class_name (if given)
 #
 process_arguments $@
 shift $?
