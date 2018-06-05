@@ -9,6 +9,7 @@
 # SWITCHES:
 #  -l LAB-NAME   : Create buckets for lab LAB-NAME.
 #  -p PROJ-NAME  : Create buckets for project PROJ-NAME.
+#  -c CLASS-NAME : Create buckets for class CLASS-NAME
 #  -d            : Enter debug mode.
 #  -v            : Become verbose.
 #
@@ -59,24 +60,14 @@ script_dir=`dirname $0`
 
 # Sets:
 #   project_id
+#   google_group_name
+#
 #   pi_tag (if given)
 #   project_name (if given)
+#   class_name (if given)
 #
 process_arguments $@
 shift $?
-
-if [ $pi_tag ]
-then
-	google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
-
-elif [ $project_name ]
-then
-	google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
-
-else
-	echo "Need either -l LAB-NAME or -p PROJ-NAME...exiting."
-	exit -1
-fi
 
 # Create the group bucket for the project.
 create_group_bucket $project_id "$project_id-$BUCKET_SUFFIX_GROUP"
@@ -89,5 +80,5 @@ create_logs_bucket $project_id "$project_id-$BUCKET_SUFFIX_LOGS"
 for i in "$@"
 do
 	# Create the user bucket.
-	create_user_bucket $project_id $i
+       create_user_bucket $project_id $i "$project_id-$BUCKET_SUFFIX_USER-$i"
 done

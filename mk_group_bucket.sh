@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-# mk_new_group_bucket.sh - Create Google Cloud group-permission buckets for a new lab/project.
+# mk_group_bucket.sh - Create Google Cloud group-permission buckets for a new lab/project/class.
 #
 # ARGUMENTS:
 # all: Suffixes of bucket names.
 #
 # SWITCHES:
-#  -l LAB-NAME : Create buckets for lab LAB-NAME.
-#  -p PROJ-NAME: Create buckets for project PROJ-NAME.
-#  -d          : Enter debug mode.
-#  -v          : Become verbose.
+#  -l LAB-NAME   : Create buckets for lab LAB-NAME.
+#  -p PROJ-NAME  : Create buckets for project PROJ-NAME.
+#  -c CLASS_NAME : Create buckets for class CLASS-NAME.
+#  -d            : Enter debug mode.
+#  -v            : Become verbose.
 #
 # 
 # Created by Keith Bettinger on 1/21/15.
@@ -58,27 +59,21 @@ script_dir=`dirname $0`
 #
 # Sets:
 #   project_id
+#   google_group_name
+#
 #   pi_tag (if given)
 #   project_name (if given)
+#   class_name (if given)
 #
 process_arguments $@
 shift $?
 
-if [ $pi_tag ]
-then
-	google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
-
-elif [ $project_name ]
-then
-	google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
-
-else
-	echo "Need either -l LAB-NAME or -p PROJ-NAME...exiting."
-	exit -1
-fi
-
-
 for i in "$@"
 do
+    if [ "$bucket_args" = true ]
+    then
+       create_group_bucket $project_id $i
+    else
 	create_group_bucket $project_id "$project_id-$i"
+    fi
 done

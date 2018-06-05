@@ -44,6 +44,7 @@ GBSC_LOGS_BUCKET='gbsc-gcp-lab-gbsc-logs'
 PROJECT_PREFIX='gbsc-gcp'
 PROJECT_PREFIX_LAB='lab'
 PROJECT_PREFIX_PROJ='project'
+PROJECT_PREFIX_CLASS='class'
 
 BUCKET_SUFFIX_GROUP='group'
 BUCKET_SUFFIX_PUBLIC='public'
@@ -55,20 +56,32 @@ COMPUTE_LOGGING_PREFIX='Compute/UsageLogs'
 
 LAB_GROUP_PREFIX='scgpm_lab'
 PROJ_GROUP_PREFIX='scgpm_prj'
+CLASS_GROUP_PREFIX='scgpm_cls'
 
 DEBUG=''
 
-# Output: sets:
-#   project_id
-#   pi_tag (if given)
-#   project_name (if given)
+# Sets:                                                                                                     
+#   project_id : -i switch
+#   google_group_name : computed
+#                                                                                                           
+#   pi_tag (if given) : -l switch
+#   project_name (if given) : -p switch
+#   class_name (if given) : -c switch
+#   bucket_name (if given) : -b switch
 #
 process_arguments() {
 
         OPTIND=1
         verbose=0
-        while getopts "i:l:p:dv" opt; do
-           case "$opt" in
+       bucket_args=false
+        while getopts "bc:i:l:p:dv" opt; do
+            case "$opt" in
+               b)
+                   bucket_args=true
+                   ;;
+               c)
+                   class_name=$OPTARG
+                   ;;
                 i)
                     project_id=$OPTARG
                     ;;
@@ -88,6 +101,7 @@ process_arguments() {
         done
         #shift "$((OPTIND-1))" # Shift off the options and optional --.
 
+       # Set project_id, if necessary.
         if [ $project_id ] 
         then
                 :  # Do nothing.
@@ -95,14 +109,33 @@ process_arguments() {
         elif [ $pi_tag ]
         then
                 project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_LAB-$pi_tag"
-                
+        
         elif [ $project_name ]
         then
                 project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_PROJ-$project_name"
-
-        else
-                echo "Need either -l LAB-NAME or -p PROJ-NAME...exiting."
+        
+       elif [ $class_name ]
+       then
+               project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name"
+        
+       else
+                echo "Need one of -l LAB-NAME, -p PROJ-NAME, or -c CLASS-NAME...exiting."
                 exit -1
+        fi
+
+       # Set google_group_name.
+        if [ $pi_tag ]
+        then
+                google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
+
+        elif [ $project_name ]
+        then
+                google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
+
+        elif [ $class_name ]
+        then
+                google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
+
         fi
         
         return $((OPTIND-1))
@@ -124,11 +157,11 @@ create_group_bucket() {
     # Create the group bucket.
     #   - As a DURABLE REDUCED AVAILABILITY bucket.
     #   - In the US.
+    echo "===> Creating the $group_bucket bucket in US region with DRA class"
     $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$group_bucket
-        echo 
+    echo 
         
     # Set logging of access to bucket to GBSC Billing bucket.
-    echo "===> Setting logging of $group_bucket to $GBSC_LOGS_BUCKET"
     set_storage_logging $project_id $group_bucket
     echo
         
@@ -167,7 +200,6 @@ create_public_bucket() {
     echo
         
     # Set logging of access to bucket to GBSC Billing bucket.
-    echo "===> Setting logging of $public_bucket to $GBSC_LOGS_BUCKET"
     set_storage_logging $project_id $public_bucket
     echo
         
@@ -197,8 +229,7 @@ create_user_bucket() {
     
     local project_id=$1
     local sunet_id=$2
-        
-    local user_bucket="$project_id-$BUCKET_SUFFIX_USER-$sunet_id"
+    local user_bucket=$3
         
     echo "********************"
     echo "CREATING USER BUCKET: $user_bucket"
@@ -207,11 +238,11 @@ create_user_bucket() {
     # Create the public bucket.
     #   - As a DURABLE REDUCED AVAILABILITY bucket.
     #   - In the US.
+    echo "===> Creating the $user_bucket bucket in US region with DRA class"
     $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$user_bucket
     echo
         
     # Set logging of access to bucket to GBSC Billing bucket.
-    echo "===> Setting logging of $user_bucket to $GBSC_LOGS_BUCKET"
     set_storage_logging $project_id $user_bucket
     echo
         
@@ -319,7 +350,7 @@ set_firewall_rules() {
     #
     # Add the 'default-allow-stanford-icmp' firewall rule.
     #
-    echo "Adding the 'default-allow-stanford-ssh' firewall rule."
+    echo "Adding the 'default-allow-stanford-icmp' firewall rule."
     $DEBUG gcloud compute firewall-rules --project $project_id --quiet create default-allow-stanford-icmp --allow icmp --source-ranges 171.64.0.0/14 --description 'Allow ICMP traffic from Stanford addresses' 
     echo
 
@@ -335,7 +366,7 @@ set_compute_logging() {
 
     local project_id=$1
         
-    echo "Setting Compute Engine logging to $GBSC_LOGS_BUCKET for $project_id."
+    echo "==> Setting Compute Engine logging to $GBSC_LOGS_BUCKET for $project_id."
     $DEBUG gcloud compute project-info set-usage-bucket --project $project_id --bucket $GBSC_LOGS_BUCKET --prefix $COMPUTE_LOGGING_PREFIX/$project_id/$project_id
         
 }
@@ -352,7 +383,22 @@ set_storage_logging() {
     local project_id=$1
     local bucket=$2
 
-    echo "Setting Storage logging to $GBSC_LOGS_BUCKET for bucket $bucket in $project_id."
+    echo "==> Setting Storage logging to $GBSC_LOGS_BUCKET for bucket $bucket in $project_id."
     $DEBUG gsutil logging set on -b gs://$GBSC_LOGS_BUCKET -o $STORAGE_LOGGING_PREFIX/$project_id/$bucket/$bucket gs://$bucket
+
+}
+
+#
+# set_compute_logging: Sets up compute engine usage logging on given project.
+#
+# Arguments:
+#  1st: Project ID  
+#
+set_compute_cloud_logging() {
+
+    local project_id=$1
+
+    echo "Setting Compute Engine Cloud logging startup-script-url for $project_id."
+    $DEBUG gcloud compute project-info add-metadata --project $project_id --metadata startup-script-url=https://dl.google.com/cloudagents/install-logging-agent.sh
 
 }
