@@ -1,0 +1,4 @@
+Script Name	Short URL	Full URL
+----------------------------------------
+centos-6-startup.sh	http://goo.gl/AAHhnX	http://storage.googleapis.com/gbsc-gcp-lab-gbsc-admin/ComputeEngine/StartupScripts/centos-6-startup.sh
+centos-7-startup.sh	http://goo.gl/jbPF7W	http://storage.googleapis.com/gbsc-gcp-lab-gbsc-admin/ComputeEngine/StartupScripts/centos-7-startup.sh

@@ -58,6 +58,9 @@ LAB_GROUP_PREFIX='scgpm_lab'
 PROJ_GROUP_PREFIX='scgpm_prj'
 CLASS_GROUP_PREFIX='scgpm_cls'
 
+STORAGE_REGION='us-west1'
+STORAGE_CLASS='regional'
+
 DEBUG=''
 
 # Sets:                                                                                                     
@@ -155,10 +158,8 @@ create_group_bucket() {
     echo "*********************"
         
     # Create the group bucket.
-    #   - As a DURABLE REDUCED AVAILABILITY bucket.
-    #   - In the US.
-    echo "===> Creating the $group_bucket bucket in US region with DRA class"
-    $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$group_bucket
+    echo "===> Creating the $group_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $project_id gs://$group_bucket
     echo 
         
     # Set logging of access to bucket to GBSC Billing bucket.
@@ -194,9 +195,8 @@ create_public_bucket() {
     echo "**********************"
        
     # Create the public bucket.
-    #   - As a DURABLE REDUCED AVAILABILITY bucket.
-    #   - In the US.
-    $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$public_bucket
+    echo "===> Creating the $public_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $project_id gs://$public_bucket
     echo
         
     # Set logging of access to bucket to GBSC Billing bucket.
@@ -236,10 +236,8 @@ create_user_bucket() {
     echo "********************"
         
     # Create the public bucket.
-    #   - As a DURABLE REDUCED AVAILABILITY bucket.
-    #   - In the US.
-    echo "===> Creating the $user_bucket bucket in US region with DRA class"
-    $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$user_bucket
+    echo "===> Creating the $user_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $project_id gs://$user_bucket
     echo
         
     # Set logging of access to bucket to GBSC Billing bucket.
@@ -287,9 +285,8 @@ create_logs_bucket() {
     echo "********************"
         
     # Create the public bucket.
-    #   - As a DURABLE REDUCED AVAILABILITY bucket.
-    #   - In the US.
-    $DEBUG gsutil mb -c DRA -l US -p $project_id gs://$logs_bucket
+    echo "===> Creating the $logs_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
+    $DEBUG gsutil mb -c $STORAGE_REGION -l $STORAGE_CLASS -p $project_id gs://$logs_bucket
     echo
 
     # Set logging of access to bucket to GBSC Billing bucket.
