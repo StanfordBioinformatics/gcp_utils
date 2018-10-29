@@ -76,7 +76,7 @@ process_arguments() {
 
         OPTIND=1
         verbose=0
-       bucket_args=false
+        bucket_args=false
         while getopts "bc:i:l:p:dv" opt; do
             case "$opt" in
                b)
@@ -112,16 +112,18 @@ process_arguments() {
         elif [ $pi_tag ]
         then
                 project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_LAB-$pi_tag"
-        
+                google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
+
         elif [ $project_name ]
         then
                 project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_PROJ-$project_name"
-        
-       elif [ $class_name ]
-       then
-               project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name"
-        
-       else
+                google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
+
+	elif [ $class_name ]
+	then
+	        project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name"
+                google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
+        else
                 echo "Need one of -l LAB-NAME, -p PROJ-NAME, or -c CLASS-NAME...exiting."
                 exit -1
         fi
