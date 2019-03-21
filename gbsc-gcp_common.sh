@@ -366,7 +366,7 @@ set_compute_logging() {
     local project_id=$1
         
     echo "==> Setting Compute Engine logging to $GBSC_LOGS_BUCKET for $project_id."
-    $DEBUG gcloud compute project-info set-usage-bucket --project $project_id --bucket $GBSC_LOGS_BUCKET --prefix $COMPUTE_LOGGING_PREFIX/$project_id/$project_id
+    $DEBUG gcloud compute project-info set-usage-bucket --project $project_id --bucket=gs://$GBSC_LOGS_BUCKET --prefix=$COMPUTE_LOGGING_PREFIX/$project_id/$project_id
         
 }
 
