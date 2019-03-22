@@ -316,7 +316,7 @@ create_logs_bucket() {
         
     # Create the public bucket.
     echo "===> Creating the $logs_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
-    $DEBUG gsutil mb -c $STORAGE_REGION -l $STORAGE_CLASS -p $gcp_project_id gs://$logs_bucket
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $gcp_project_id gs://$logs_bucket
     echo
 
     # Set logging of access to bucket to GBSC Billing bucket.
