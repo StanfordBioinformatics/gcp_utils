@@ -58,7 +58,7 @@ script_dir=`dirname $0`
 #
 
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -72,5 +72,5 @@ shift $?
 for i in "$@"
 do
 	# Log the given bucket
-	set_storage_logging $project_id $i
+	set_storage_logging $gcp_project_id $i
 done
