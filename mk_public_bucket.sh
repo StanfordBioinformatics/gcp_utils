@@ -59,7 +59,7 @@ script_dir=`dirname $0`
 # SCRIPT BODY
 #
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -73,8 +73,8 @@ if [ "$bucket_args" = true ]
 then
     for i in "$@"
     do
-	create_public_bucket $project_id $i
+	create_public_bucket $gcp_project_id $i
     done
 else
-    create_public_bucket $project_id "$project_id-$BUCKET_SUFFIX_PUBLIC"
+    create_public_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_PUBLIC"
 fi

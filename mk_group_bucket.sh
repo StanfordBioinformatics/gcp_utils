@@ -58,7 +58,7 @@ script_dir=`dirname $0`
 # SCRIPT BODY
 #
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -72,8 +72,8 @@ for i in "$@"
 do
     if [ "$bucket_args" = true ]
     then
-       create_group_bucket $project_id $i
+       create_group_bucket $gcp_project_id $i
     else
-	create_group_bucket $project_id "$project_id-$i"
+	create_group_bucket $gcp_project_id "$gcp_project_id-$i"
     fi
 done

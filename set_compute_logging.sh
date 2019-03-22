@@ -57,7 +57,7 @@ script_dir=`dirname $0`
 #
 
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -70,4 +70,4 @@ shift $?
 #
 # Set the Compute Engine logging.
 #
-set_compute_logging $project_id
+set_compute_logging $gcp_project_id

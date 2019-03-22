@@ -59,7 +59,7 @@ script_dir=`dirname $0`
 #
 
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -70,15 +70,15 @@ process_arguments $@
 shift $?
 
 # Create the group bucket for the project.
-create_group_bucket $project_id "$project_id-$BUCKET_SUFFIX_GROUP"
+create_group_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_GROUP"
 # Create the public bucket for the project.
-create_public_bucket $project_id "$project_id-$BUCKET_SUFFIX_PUBLIC"
+create_public_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_PUBLIC"
 # Create the logs bucket for the project.
-create_logs_bucket $project_id "$project_id-$BUCKET_SUFFIX_LOGS"
+create_logs_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_LOGS"
 
 # For each of the users given as arguments:
 for i in "$@"
 do
 	# Create the user bucket.
-       create_user_bucket $project_id $i "$project_id-$BUCKET_SUFFIX_USER-$i"
+       create_user_bucket $gcp_project_id $i "$gcp_project_id-$BUCKET_SUFFIX_USER-$i"
 done

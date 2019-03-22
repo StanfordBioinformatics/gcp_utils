@@ -86,7 +86,7 @@ process_arguments() {
                    class_name=$OPTARG
                    ;;
                 i)
-                    project_id=$OPTARG
+                    gcp_project_id=$OPTARG
                     ;;
                 l)
                     pi_tag=$OPTARG
@@ -104,47 +104,71 @@ process_arguments() {
         done
         #shift "$((OPTIND-1))" # Shift off the options and optional --.
 
-       # Set project_id, if necessary.
-        if [ $project_id ] 
+       # Set gcp_project_id and google_group-name, if necessary.
+        if [ $gcp_project_id ] 
         then
                 :  # Do nothing.
                 
         elif [ $pi_tag ]
         then
-                project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_LAB-$pi_tag"
-                google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
+                gcp_project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_LAB-$pi_tag"
+                gcp_project_name="GBSC Lab - $pi_tag"
+		google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
 
         elif [ $project_name ]
         then
-                project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_PROJ-$project_name"
-                google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
+	        project_name_lower=`echo $project_name | tr '[:upper:]' '[:lower:]'`
+                gcp_project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_PROJ-$project_name_lower"
+                gcp_project_name="GBSC Project - $project_name"
+		google_group_name="$PROJ_GROUP_PREFIX-$project_name_lower-gcp@stanford.edu"
 
 	elif [ $class_name ]
 	then
-	        project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name"
+	        class_name_lower=`echo $class_name | tr '[:upper:]' '[:lower:]'`
+	        gcp_project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name_lower"
+		gcp_project_name="GBSC Class - $class_name"
                 google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
         else
                 echo "Need one of -l LAB-NAME, -p PROJ-NAME, or -c CLASS-NAME...exiting."
                 exit -1
         fi
-
-       # Set google_group_name.
-        if [ $pi_tag ]
-        then
-                google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
-
-        elif [ $project_name ]
-        then
-                google_group_name="$PROJ_GROUP_PREFIX-$project_name-gcp@stanford.edu"
-
-        elif [ $class_name ]
-        then
-                google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
-
-        fi
         
         return $((OPTIND-1))
 
+}
+
+export GCP_GBSC_FOLDER_ID=375758629844
+export GCP_ORGANIZATION_ID=302681460499
+
+# Arguments:
+#  1st: project ID
+#  2nd: project Name
+create_project() {
+
+    local id=$1
+    local name=$2
+
+    # Create the project
+    echo "Creating project $id named $name"
+    $DEBUG gcloud projects create $id --folder=$GCP_GBSC_FOLDER_ID --name=$name
+    $DEBUG gcloud projects list --filter="project_id~$id"
+}
+
+# Arguments:                                                                          
+#  1st: project ID
+add_apis() {
+
+    local gcp_project_id=$1
+
+    # Add the Compute Engine API
+    echo "Adding the Compute Engine API to $gcp_project_id"
+    $DEBUG gcloud services enable compute.googleapis.com --async --project=$gcp_project_id
+
+    # Add the Genomics API
+    echo "Adding the Genomics API to $gcp_project_id"
+    $DEBUG gcloud services enable genomics.googleapis.com --async --project=$gcp_project_id
+
+    echo
 }
 
 # Arguments:
@@ -152,8 +176,9 @@ process_arguments() {
 #  2nd: bucket name
 create_group_bucket() {
 
-    local project_id=$1
-    local group_bucket=$2
+    local gcp_project_id=$1
+
+    local group_bucket="$gcp_project_id-$BUCKET_SUFFIX_GROUP"
 
     echo "*********************"
     echo "CREATING GROUP BUCKET: $group_bucket"
@@ -161,11 +186,11 @@ create_group_bucket() {
         
     # Create the group bucket.
     echo "===> Creating the $group_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
-    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $project_id gs://$group_bucket
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $gcp_project_id gs://$group_bucket
     echo 
         
     # Set logging of access to bucket to GBSC Billing bucket.
-    set_storage_logging $project_id $group_bucket
+    set_storage_logging $gcp_project_id $group_bucket
     echo
         
     #
@@ -189,8 +214,9 @@ create_group_bucket() {
 #  2nd: bucket name
 create_public_bucket() {
 
-    local project_id=$1
-    local public_bucket=$2
+    local gcp_project_id=$1
+
+    local public_bucket="$gcp_project_id-$BUCKET_SUFFIX_PUBLIC"
         
     echo "**********************"
     echo "CREATING PUBLIC BUCKET: $public_bucket"
@@ -198,11 +224,11 @@ create_public_bucket() {
        
     # Create the public bucket.
     echo "===> Creating the $public_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
-    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $project_id gs://$public_bucket
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $gcp_project_id gs://$public_bucket
     echo
         
     # Set logging of access to bucket to GBSC Billing bucket.
-    set_storage_logging $project_id $public_bucket
+    set_storage_logging $gcp_project_id $public_bucket
     echo
         
     #
@@ -229,9 +255,10 @@ create_public_bucket() {
 #  2nd: SUnetID for user.
 create_user_bucket() {
     
-    local project_id=$1
+    local gcp_project_id=$1
     local sunet_id=$2
-    local user_bucket=$3
+
+    local user_bucket="$gcp_project_id-$BUCKET_SUFFIX_USER-$sunet_id"
         
     echo "********************"
     echo "CREATING USER BUCKET: $user_bucket"
@@ -239,11 +266,11 @@ create_user_bucket() {
         
     # Create the public bucket.
     echo "===> Creating the $user_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
-    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $project_id gs://$user_bucket
+    $DEBUG gsutil mb -c $STORAGE_CLASS -l $STORAGE_REGION -p $gcp_project_id gs://$user_bucket
     echo
         
     # Set logging of access to bucket to GBSC Billing bucket.
-    set_storage_logging $project_id $user_bucket
+    set_storage_logging $gcp_project_id $user_bucket
     echo
         
     #
@@ -279,8 +306,9 @@ create_user_bucket() {
 #  1st: project ID
 create_logs_bucket() {
     
-    local project_id=$1
-    local logs_bucket=$2
+    local gcp_project_id=$1
+
+    local logs_bucket="$gcp_project_id-$BUCKET_SUFFIX_LOGS"
         
     echo "********************"
     echo "CREATING LOGS BUCKET: $logs_bucket"
@@ -288,12 +316,12 @@ create_logs_bucket() {
         
     # Create the public bucket.
     echo "===> Creating the $logs_bucket bucket in $STORAGE_REGION region with $STORAGE_CLASS class"
-    $DEBUG gsutil mb -c $STORAGE_REGION -l $STORAGE_CLASS -p $project_id gs://$logs_bucket
+    $DEBUG gsutil mb -c $STORAGE_REGION -l $STORAGE_CLASS -p $gcp_project_id gs://$logs_bucket
     echo
 
     # Set logging of access to bucket to GBSC Billing bucket.
     echo "===> Setting logging of $logs_bucket to $GBSC_LOGS_BUCKET"
-    set_storage_logging $project_id $logs_bucket
+    set_storage_logging $gcp_project_id $logs_bucket
     echo
         
     #
@@ -312,7 +340,7 @@ create_logs_bucket() {
 #  1st: Project ID
 set_firewall_rules() {
 
-    local project_id=$1
+    local gcp_project_id=$1
 
     ###
     # All modifications are to the 'default' network.
@@ -322,35 +350,35 @@ set_firewall_rules() {
     # Delete the 'default-allow-rdp' firewall rule.
     #
     echo "Deleting the 'default-allow-rdp' firewall rule."
-    $DEBUG gcloud compute firewall-rules --project $project_id --quiet delete default-allow-rdp
+    $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet delete default-allow-rdp
     echo
 
     #
     # Delete the 'default-allow-ssh' firewall rule.
     #
     echo "Deleting the 'default-allow-ssh' firewall rule."
-    $DEBUG gcloud compute firewall-rules --project $project_id --quiet delete default-allow-ssh
+    $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet delete default-allow-ssh
     echo
         
     #
     # Delete the 'default-allow-icmp' firewall rule.
     #
     echo "Deleting the 'default-allow-icmp' firewall rule."
-    $DEBUG gcloud compute firewall-rules --project $project_id --quiet delete default-allow-icmp
+    $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet delete default-allow-icmp
     echo
 
     #
     # Add the 'default-allow-stanford-ssh' firewall rule.
     #
     echo "Adding the 'default-allow-stanford-ssh' firewall rule."
-    $DEBUG gcloud compute firewall-rules --project $project_id --quiet create default-allow-stanford-ssh --allow tcp:22 --source-ranges 171.64.0.0/14 --description 'Allow SSH connections from Stanford addresses' 
+    $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet create default-allow-stanford-ssh --allow tcp:22 --source-ranges 171.64.0.0/14 --description 'Allow SSH connections from Stanford addresses' 
     echo
         
     #
     # Add the 'default-allow-stanford-icmp' firewall rule.
     #
     echo "Adding the 'default-allow-stanford-icmp' firewall rule."
-    $DEBUG gcloud compute firewall-rules --project $project_id --quiet create default-allow-stanford-icmp --allow icmp --source-ranges 171.64.0.0/14 --description 'Allow ICMP traffic from Stanford addresses' 
+    $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet create default-allow-stanford-icmp --allow icmp --source-ranges 171.64.0.0/14 --description 'Allow ICMP traffic from Stanford addresses' 
     echo
 
 }
@@ -363,10 +391,10 @@ set_firewall_rules() {
 #
 set_compute_logging() {
 
-    local project_id=$1
+    local gcp_project_id=$1
         
-    echo "==> Setting Compute Engine logging to $GBSC_LOGS_BUCKET for $project_id."
-    $DEBUG gcloud compute project-info set-usage-bucket --project $project_id --bucket=gs://$GBSC_LOGS_BUCKET --prefix=$COMPUTE_LOGGING_PREFIX/$project_id/$project_id
+    echo "==> Setting Compute Engine logging to $GBSC_LOGS_BUCKET for $gcp_project_id."
+    $DEBUG gcloud compute project-info set-usage-bucket --project $gcp_project_id --bucket=gs://$GBSC_LOGS_BUCKET --prefix=$COMPUTE_LOGGING_PREFIX/$gcp_project_id/$gcp_project_id
         
 }
 
@@ -379,11 +407,11 @@ set_compute_logging() {
 #
 set_storage_logging() {
 
-    local project_id=$1
+    local gcp_project_id=$1
     local bucket=$2
 
-    echo "==> Setting Storage logging to $GBSC_LOGS_BUCKET for bucket $bucket in $project_id."
-    $DEBUG gsutil logging set on -b gs://$GBSC_LOGS_BUCKET -o $STORAGE_LOGGING_PREFIX/$project_id/$bucket/$bucket gs://$bucket
+    echo "==> Setting Storage logging to $GBSC_LOGS_BUCKET for bucket $bucket in $gcp_project_id."
+    $DEBUG gsutil logging set on -b gs://$GBSC_LOGS_BUCKET -o $STORAGE_LOGGING_PREFIX/$gcp_project_id/$bucket/$bucket gs://$bucket
 
 }
 
@@ -395,9 +423,9 @@ set_storage_logging() {
 #
 set_compute_cloud_logging() {
 
-    local project_id=$1
+    local gcp_project_id=$1
 
-    echo "Setting Compute Engine Cloud logging startup-script-url for $project_id."
-    $DEBUG gcloud compute project-info add-metadata --project $project_id --metadata startup-script-url=https://dl.google.com/cloudagents/install-logging-agent.sh
+    echo "Setting Compute Engine Cloud logging startup-script-url for $gcp_project_id."
+    $DEBUG gcloud compute project-info add-metadata --project $gcp_project_id --metadata startup-script-url=https://dl.google.com/cloudagents/install-logging-agent.sh
 
 }

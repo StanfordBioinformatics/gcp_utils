@@ -57,7 +57,7 @@ script_dir=`dirname $0`
 #
 
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -67,11 +67,11 @@ script_dir=`dirname $0`
 process_arguments $@
 shift $?
 
-set_firewall_rules $project_id
+set_firewall_rules $gcp_project_id
 
 #
 # Print out all the firewall rules now.
 #
 echo
 echo "The current firewall rules:"
-$DEBUG gcloud compute firewall-rules --project $project_id list
+$DEBUG gcloud compute firewall-rules --project $gcp_project_id list

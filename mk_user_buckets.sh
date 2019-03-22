@@ -58,7 +58,7 @@ script_dir=`dirname $0`
 #
 
 # Sets:
-#   project_id
+#   gcp_project_id
 #   google_group_name
 #
 #   pi_tag (if given)
@@ -72,5 +72,5 @@ shift $?
 for sunet_id in "$@"
 do
 	# Create the user bucket.
-       create_user_bucket $project_id $sunet_id "$project_id-$BUCKET_SUFFIX_USER-$sunet_id"
+       create_user_bucket $gcp_project_id $sunet_id "$project_id-$BUCKET_SUFFIX_USER-$sunet_id"
 done
