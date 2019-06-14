@@ -68,12 +68,12 @@ script_dir=`dirname $0`
 process_arguments $@
 shift $?
 
-for i in "$@"
-do
-    if [ "$bucket_args" = true ]
-    then
-       create_group_bucket $gcp_project_id $i
-    else
-	create_group_bucket $gcp_project_id "$gcp_project_id-$i"
-    fi
-done
+if [ "$bucket_args" = true ]
+    then 
+    for i in "$@"
+    do
+	create_group_bucket $gcp_project_id $i
+    done
+else
+    create_group_bucket $gcp_project_id
+fi
