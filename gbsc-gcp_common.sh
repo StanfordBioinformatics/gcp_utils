@@ -177,8 +177,12 @@ add_apis() {
 create_group_bucket() {
 
     local gcp_project_id=$1
+    local group_bucket=$2
 
-    local group_bucket="$gcp_project_id-$BUCKET_SUFFIX_GROUP"
+    if [ "T$group_bucket" == "T" ]
+	then
+	group_bucket="$gcp_project_id""_""$BUCKET_SUFFIX_GROUP"
+    fi
 
     echo "*********************"
     echo "CREATING GROUP BUCKET: $group_bucket"
