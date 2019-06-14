@@ -173,7 +173,7 @@ add_apis() {
 
 # Arguments:
 #  1st: project ID
-#  2nd: bucket name
+#  2nd: bucket name (optional)
 create_group_bucket() {
 
     local gcp_project_id=$1
@@ -215,7 +215,7 @@ create_group_bucket() {
 
 # Arguments:
 #  1st: project ID
-#  2nd: bucket name
+#  2nd: bucket name (optional)
 create_public_bucket() {
 
     local gcp_project_id=$1
@@ -266,7 +266,7 @@ create_user_bucket() {
     local gcp_project_id=$1
     local sunet_id=$2
 
-    local user_bucket="$gcp_project_id-$BUCKET_SUFFIX_USER-$sunet_id"
+    local user_bucket="$gcp_project_id""_""$BUCKET_SUFFIX_USER-$sunet_id"
         
     echo "********************"
     echo "CREATING USER BUCKET: $user_bucket"
@@ -316,7 +316,7 @@ create_logs_bucket() {
     
     local gcp_project_id=$1
 
-    local logs_bucket="$gcp_project_id-$BUCKET_SUFFIX_LOGS"
+    local logs_bucket="$gcp_project_id""_""$BUCKET_SUFFIX_LOGS"
         
     echo "********************"
     echo "CREATING LOGS BUCKET: $logs_bucket"
