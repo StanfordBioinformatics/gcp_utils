@@ -76,5 +76,5 @@ then
 	create_public_bucket $gcp_project_id $i
     done
 else
-    create_public_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_PUBLIC"
+    create_public_bucket $gcp_project_id
 fi

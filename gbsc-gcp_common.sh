@@ -219,9 +219,13 @@ create_group_bucket() {
 create_public_bucket() {
 
     local gcp_project_id=$1
+    local public_bucket=$2
 
-    local public_bucket="$gcp_project_id-$BUCKET_SUFFIX_PUBLIC"
-        
+    if [ "T$public_bucket" == "T" ]
+	then
+	public_bucket="$gcp_project_id""_""$BUCKET_SUFFIX_PUBLIC"
+    fi
+
     echo "**********************"
     echo "CREATING PUBLIC BUCKET: $public_bucket"
     echo "**********************"
