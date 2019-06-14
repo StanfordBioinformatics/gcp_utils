@@ -70,15 +70,15 @@ process_arguments $@
 shift $?
 
 # Create the group bucket for the project.
-create_group_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_GROUP"
+create_group_bucket $gcp_project_id
 # Create the public bucket for the project.
-create_public_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_PUBLIC"
+create_public_bucket $gcp_project_id
 # Create the logs bucket for the project.
-create_logs_bucket $gcp_project_id "$gcp_project_id-$BUCKET_SUFFIX_LOGS"
+create_logs_bucket $gcp_project_id
 
 # For each of the users given as arguments:
 for i in "$@"
 do
 	# Create the user bucket.
-       create_user_bucket $gcp_project_id $i "$gcp_project_id-$BUCKET_SUFFIX_USER-$i"
+       create_user_bucket $gcp_project_id $i
 done
