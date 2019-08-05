@@ -150,8 +150,8 @@ create_project() {
 
     # Create the project
     echo "Creating project $id named $name"
-    $DEBUG gcloud projects create $id --folder=$GCP_GBSC_FOLDER_ID --name=$name
-    $DEBUG gcloud projects list --filter="project_id~$id"
+    $DEBUG gcloud projects create $id --folder=$GCP_GBSC_FOLDER_ID --name="'$name'"
+    $DEBUG gcloud projects list --filter="project_id=$id"
 }
 
 # Arguments:                                                                          
