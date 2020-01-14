@@ -147,11 +147,16 @@ create_project() {
 
     local id=$1
     local name=$2
+    local billing_account=$3
 
     # Create the project
     echo "Creating project $id named $name"
     $DEBUG gcloud projects create $id --folder=$GCP_GBSC_FOLDER_ID --name="'$name'"
     $DEBUG gcloud projects list --filter="project_id=$id"
+
+    # Adding billing account.
+    echo "Adding billing account $billing_account"
+    $DEBUG gcloud beta billing projects link $id --billing-account $billing_account
 }
 
 # Arguments:                                                                          
@@ -160,13 +165,31 @@ add_apis() {
 
     local gcp_project_id=$1
 
+    ###
     # Add the Compute Engine API
+    ###
     echo "Adding the Compute Engine API to $gcp_project_id"
-    $DEBUG gcloud services enable compute.googleapis.com --async --project=$gcp_project_id
+    $DEBUG gcloud services enable compute.googleapis.com --project=$gcp_project_id
 
+    # Set the firewall rules for Compute Engine
+    echo "  Setting the firewall rules"
+    set_firewall_rules $gcp_project_id
+
+    # Set the Compute Engine Usage Log export.
+    echo "  Set the Compute Engine Usage Log export"
+    set_compute_logging $gcp_project_id
+
+    # Set up Cloud Logging via fluentid
+    echo "  Set up Cloud Logging via fluentid"
+    set_compute_cloud_logging $gcp_project_id
+
+    echo 
+
+    ###
     # Add the Genomics API
+    ###
     echo "Adding the Genomics API to $gcp_project_id"
-    $DEBUG gcloud services enable genomics.googleapis.com --async --project=$gcp_project_id
+    $DEBUG gcloud services enable genomics.googleapis.com --project=$gcp_project_id
 
     echo
 }
@@ -357,35 +380,35 @@ set_firewall_rules() {
     #
     # Delete the 'default-allow-rdp' firewall rule.
     #
-    echo "Deleting the 'default-allow-rdp' firewall rule."
+    echo "      Deleting the 'default-allow-rdp' firewall rule."
     $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet delete default-allow-rdp
     echo
 
     #
     # Delete the 'default-allow-ssh' firewall rule.
     #
-    echo "Deleting the 'default-allow-ssh' firewall rule."
+    echo "      Deleting the 'default-allow-ssh' firewall rule."
     $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet delete default-allow-ssh
     echo
         
     #
     # Delete the 'default-allow-icmp' firewall rule.
     #
-    echo "Deleting the 'default-allow-icmp' firewall rule."
+    echo "      Deleting the 'default-allow-icmp' firewall rule."
     $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet delete default-allow-icmp
     echo
 
     #
     # Add the 'default-allow-stanford-ssh' firewall rule.
     #
-    echo "Adding the 'default-allow-stanford-ssh' firewall rule."
+    echo "      Adding the 'default-allow-stanford-ssh' firewall rule."
     $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet create default-allow-stanford-ssh --allow tcp:22 --source-ranges 171.64.0.0/14 --description 'Allow SSH connections from Stanford addresses' 
     echo
         
     #
     # Add the 'default-allow-stanford-icmp' firewall rule.
     #
-    echo "Adding the 'default-allow-stanford-icmp' firewall rule."
+    echo "      Adding the 'default-allow-stanford-icmp' firewall rule."
     $DEBUG gcloud compute firewall-rules --project $gcp_project_id --quiet create default-allow-stanford-icmp --allow icmp --source-ranges 171.64.0.0/14 --description 'Allow ICMP traffic from Stanford addresses' 
     echo
 

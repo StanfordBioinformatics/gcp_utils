@@ -3,7 +3,7 @@
 # create_project.sh - Create a Google Cloud project
 #
 # ARGUMENTS:
-# None
+#   Billing account to use for project.
 #
 # SWITCHES:
 #  -i PROJECT-ID : Use this Google Project ID in bucket name.
@@ -70,5 +70,5 @@ process_arguments $@
 shift $?
 
 # Create the project
-create_project $gcp_project_id "$gcp_project_name"
+create_project $gcp_project_id "$gcp_project_name" $1
 
