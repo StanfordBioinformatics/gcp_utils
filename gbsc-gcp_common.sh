@@ -43,7 +43,7 @@ GBSC_LOGS_BUCKET='gbsc-gcp-lab-gbsc-logs'
 
 PROJECT_PREFIX='gbsc-gcp'
 PROJECT_PREFIX_LAB='lab'
-PROJECT_PREFIX_PROJ='project'
+PROJECT_PREFIX_PROJ='prj'
 PROJECT_PREFIX_CLASS='class'
 
 BUCKET_SUFFIX_GROUP='group'
@@ -77,7 +77,7 @@ process_arguments() {
         OPTIND=1
         verbose=0
         bucket_args=false
-        while getopts "bc:i:l:p:dv" opt; do
+        while getopts "bc:i:l:p:g:dv" opt; do
             case "$opt" in
                b)
                    bucket_args=true
@@ -85,21 +85,24 @@ process_arguments() {
                c)
                    class_name=$OPTARG
                    ;;
-                i)
-                    gcp_project_id=$OPTARG
-                    ;;
-                l)
-                    pi_tag=$OPTARG
-                    ;;
-                p)
-                    project_name=$OPTARG
-                    ;;
-                d)
-                    DEBUG="echo % "
-                    ;;
-                v)  
-                    verbose=$((verbose+1))
-                    ;;
+               i)
+                   gcp_project_id=$OPTARG
+                   ;;
+               l)
+                   pi_tag=$OPTARG
+                   ;;
+               p)
+                   project_name=$OPTARG
+                   ;;
+               g)
+                   google_group_name=$OPTARG
+                   ;;
+               d)
+                   DEBUG="echo % "
+                   ;;
+               v)  
+                   verbose=$((verbose+1))
+                   ;;
            esac
         done
         #shift "$((OPTIND-1))" # Shift off the options and optional --.
@@ -113,21 +116,21 @@ process_arguments() {
         then
                 gcp_project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_LAB-$pi_tag"
                 gcp_project_name="GBSC Lab - $pi_tag"
-		google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
+		[[ "$google_group_name" == "" ]] && google_group_name="$LAB_GROUP_PREFIX-$pi_tag-gcp@stanford.edu"
 
         elif [ $project_name ]
         then
 	        project_name_lower=`echo $project_name | tr '[:upper:]' '[:lower:]'`
                 gcp_project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_PROJ-$project_name_lower"
                 gcp_project_name="GBSC Project - $project_name"
-		google_group_name="$PROJ_GROUP_PREFIX-$project_name_lower-gcp@stanford.edu"
+		[[ "$google_group_name" == "" ]] && google_group_name="$PROJ_GROUP_PREFIX-$project_name_lower-gcp@stanford.edu"
 
 	elif [ $class_name ]
 	then
 	        class_name_lower=`echo $class_name | tr '[:upper:]' '[:lower:]'`
 	        gcp_project_id="$PROJECT_PREFIX-$PROJECT_PREFIX_CLASS-$class_name_lower"
 		gcp_project_name="GBSC Class - $class_name"
-                google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
+                [[ "$google_group_name" == "" ]] && google_group_name="$CLASS_GROUP_PREFIX-$class_name-gcp@stanford.edu"
         else
                 echo "Need one of -l LAB-NAME, -p PROJ-NAME, or -c CLASS-NAME...exiting."
                 exit -1
