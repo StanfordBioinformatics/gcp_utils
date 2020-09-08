@@ -194,6 +194,12 @@ add_apis() {
     echo "Adding the Genomics API to $gcp_project_id"
     $DEBUG gcloud services enable genomics.googleapis.com --project=$gcp_project_id
 
+    ###
+    # Add the Life Sciences API
+    ###
+    echo "Adding the Life Sciences API to $gcp_project_id"
+    $DEBUG gcloud services enable lifesciences.googleapis.com --project=$gcp_project_id
+
     echo
 }
 
