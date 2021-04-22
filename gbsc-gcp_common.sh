@@ -135,7 +135,22 @@ process_arguments() {
                 echo "Need one of -l LAB-NAME, -p PROJ-NAME, or -c CLASS-NAME...exiting."
                 exit -1
         fi
-        
+
+        # If gcp_project_id is greater than 30 characters, complain and exit (permanent ID cannot be truncated)
+	if [ `echo $gcp_project_id | wc -c` -gt 30 ]
+	then
+		echo "'$gcp_project_id' is greater than 30 characters...exiting..."
+		exit -1
+	fi
+
+	# If gcp_project_name is greater than 30 characters, warn and truncate (can change easily)
+        if [ `echo $gcp_project_name | wc -c` -gt 30 ]
+	then
+		echo "'$gcp_project_name' is greater than 30 characters"
+		gcp_project_name=`echo $gcp_project_name | cut -c 1-30`	
+		echo "Truncating to '$gcp_project_name'"
+	fi
+
         return $((OPTIND-1))
 
 }
@@ -146,6 +161,7 @@ export GCP_ORGANIZATION_ID=302681460499
 # Arguments:
 #  1st: project ID
 #  2nd: project Name
+#  3rd: billing account ID
 create_project() {
 
     local id=$1
