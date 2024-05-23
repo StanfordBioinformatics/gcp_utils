@@ -72,7 +72,7 @@ shift $?
 # Create the group bucket for the project.
 create_group_bucket $gcp_project_id
 # Create the public bucket for the project.
-create_public_bucket $gcp_project_id
+# create_public_bucket $gcp_project_id
 # Create the logs bucket for the project.
 create_logs_bucket $gcp_project_id
 
