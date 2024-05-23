@@ -155,8 +155,12 @@ process_arguments() {
 
 }
 
-export GCP_GBSC_FOLDER_ID=375758629844
 export GCP_ORGANIZATION_ID=302681460499
+
+export GCP_GBSC_FOLDER_ID=375758629844  # "GBSC", which contains the folders below:
+export GCP_LABS_FOLDER_ID=805502931410  # "Labs"
+export GCP_CLSS_FOLDER_ID=878207514910  # "Classes"
+export GCP_PRJS_FOLDER_ID=354930997754  # "Projects"
 
 # Arguments:
 #  1st: project ID
@@ -168,14 +172,29 @@ create_project() {
     local name=$2
     local billing_account=$3
 
-    # Create the project
-    echo "Creating project $id named $name"
-    $DEBUG gcloud projects create $id --folder=$GCP_GBSC_FOLDER_ID "--name=$name"
+    # Create the Google Cloud project
+    if [ $pi_tag ]; then
+      echo "Creating project $id named $name in Labs folder"
+      $DEBUG gcloud projects create $id --folder=$GCP_LABS_FOLDER_ID "--name=$name"
+    elif [ $class_name ]; then
+      echo "Creating project $id named $name in Classes folder"
+      $DEBUG gcloud projects create $id --folder=$GCP_CLSS_FOLDER_ID "--name=$name"
+    elif [ $project_name ]; then
+      echo "Creating project $id named $name in Projects folder"
+      $DEBUG gcloud projects create $id --folder=$GCP_PRJS_FOLDER_ID "--name=$name"
+    else
+      echo "Creating project $id named $name in GBSC folder"
+      $DEBUG gcloud projects create $id --folder=$GCP_GBSC_FOLDER_ID "--name=$name"
+    fi
+
+    sleep 10  # Need to wait for project to be fully created
     $DEBUG gcloud projects list --filter="project_id=$id"
 
     # Adding billing account.
-    echo "Adding billing account $billing_account"
-    $DEBUG gcloud beta billing projects link $id --billing-account $billing_account
+    if [ $billing_account ]; then
+      echo "Adding billing account $billing_account"
+      $DEBUG gcloud beta billing projects link $id --billing-account $billing_account
+    fi
 }
 
 # Arguments:                                                                          
@@ -485,3 +504,12 @@ set_compute_cloud_logging() {
     $DEBUG gcloud compute project-info add-metadata --project $gcp_project_id --metadata startup-script-url=https://dl.google.com/cloudagents/install-logging-agent.sh
 
 }
+
+###
+#
+# Test to see if 'gcloud' command is available
+#
+###
+
+if ! which gcloud > /dev/null ; then echo "gcloud is not in \$PATH, exiting..." ; exit -1 ; fi
+
